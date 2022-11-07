@@ -1,0 +1,25 @@
+    laravel-syncer:
+        image: eugenmayer/unison:2.51.2.1
+        command: /entrypoint.sh supervisord
+        volumes:
+          # This container is configured to sync /host_sync to /app_sync (see environment)
+          # We bind ./ (current/root directory) to /host_sync using docker-for-mac's osxfs,
+          # and then bind /app_sync to our sail-docker-sync named volume, so that it
+          # can be used by our `laravel.test` container
+          - ./:/host_sync
+          - sail-docker-sync:/app_sync
+        environment:
+          # These variables control which directories are synced by unison.
+          - HOST_VOLUME=/host_sync
+          - APP_VOLUME=/app_sync
+          - UNISON_SRC=/host_sync
+          - UNISON_DEST=/app_sync
+          - UNISON_DIR=/data
+          - OWNER_UID=501 # Sail users in sail-php container
+          # Unison flags are fine to leave as they are, see https://www.cis.upenn.edu/~bcpierce/unison/download/releases/beta/unison-manual.html#sec42
+          - UNISON_ARGS=-prefer /host_sync -numericids -auto -batch -ignore='Path .idea' -ignore='Path .git' -ignore='BelowPath .git'
+          - UNISON_WATCH_ARGS=-repeat watch
+          # A few extra environment variables to make C libraries behave sensibly.
+          - TZ=Europe/Amsterdam
+          - LANG=C.UTF-8
+          - HOME=/root

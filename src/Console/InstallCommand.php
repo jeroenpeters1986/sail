@@ -39,6 +39,7 @@ class InstallCommand extends Command
         'minio',
         'mailhog',
         'selenium',
+        'docker-sync',
     ];
 
     /**
@@ -106,7 +107,7 @@ class InstallCommand extends Command
 
         $volumes = collect($services)
             ->filter(function ($service) {
-                return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']);
+                return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio', 'docker-sync']);
             })->map(function ($service) {
                 return "    sail-{$service}:\n        driver: local";
             })->whenNotEmpty(function ($collection) {
@@ -122,6 +123,11 @@ class InstallCommand extends Command
         // Replace Selenium with ARM base container on Apple Silicon...
         if (in_array('selenium', $services) && php_uname('m') === 'arm64') {
             $dockerCompose = str_replace('selenium/standalone-chrome', 'seleniarm/standalone-chromium', $dockerCompose);
+        }
+
+        // Replace Laravel PHP container volume with Docker-sync name if applicable
+        if (in_array('docker-sync', $services)) {
+            $dockerCompose = str_replace("'.:/var/www/html'", 'sail-docker-sync:/var/www/html:nocopy', $dockerCompose);
         }
 
         // Remove empty lines...
