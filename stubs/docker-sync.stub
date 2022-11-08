@@ -1,4 +1,4 @@
-    laravel-syncer:
+    docker-sync:
         image: eugenmayer/unison:2.51.2.1
         command: /entrypoint.sh supervisord
         volumes:
